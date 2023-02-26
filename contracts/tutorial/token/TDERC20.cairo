@@ -1,5 +1,5 @@
 #[contract]
-mod ERC20 {
+mod TDERC20 {
     use zeroable::Zeroable;
     use starknet::get_caller_address;
     use starknet::contract_address_const;
@@ -12,6 +12,7 @@ mod ERC20 {
         total_supply: u256,
         balances: LegacyMap::<ContractAddress, u256>,
         allowances: LegacyMap::<(ContractAddress, ContractAddress), u256>,
+        teachers_and_exercises_accounts: LegacyMap::<ContractAddress, u256>,
     }
 
     #[event]
@@ -22,15 +23,16 @@ mod ERC20 {
 
     #[constructor]
     fn constructor(
-        name_: felt, symbol_: felt, decimals_: u8, initial_supply: u256, recipient: ContractAddress
+        name_: felt, symbol_: felt, decimals_: u8, initial_supply: u256, teacher: ContractAddress
     ) {
         name::write(name_);
         symbol::write(symbol_);
         decimals::write(decimals_);
-        assert(!recipient.is_zero(), 'ERC20: mint to the 0 address');
+        assert(!teacher.is_zero(), 'ERC20: mint to the 0 address');
         total_supply::write(initial_supply);
-        balances::write(recipient, initial_supply);
-        Transfer(contract_address_const::<0>(), recipient, initial_supply);
+        balances::write(teacher, initial_supply);
+        teachers_and_exercises_accounts::write(teacher, 1);
+        Transfer(contract_address_const::<0>(), teacher, initial_supply);
     }
 
     #[view]
@@ -116,5 +118,19 @@ mod ERC20 {
         assert(!spender.is_zero(), 'ERC20: approve from 0');
         allowances::write((owner, spender), amount);
         Approval(owner, spender, amount);
+    }
+
+
+    // specific to this contract
+    #[external]
+    fn is_teacher_or_exercise(account: ContractAddress) -> bool {
+        teachers_and_exercises_accounts::read(account) == 1
+    }
+
+   
+    // internal functions
+    fn only_teacher_or_exercise() {
+        let caller = get_caller_address();
+        assert(teachers_and_exercises_accounts::read(caller) == 1, 'ERC20: only teacher or exercise');
     }
 }
