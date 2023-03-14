@@ -1,0 +1,7 @@
+[package]
+name = "starknet_accounts"
+version = "0.1.0"
+description = "Learn how to build and deploy StarkNet Accounts"
+
+[[target.starknet-contract]]
+name = "contracts"

@@ -1,0 +1,2 @@
+[crate_roots]
+starknet_accounts = "src"
